@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import helmet from "helmet";
 
 import productRoutes from "./routes/productRoutes.js";
 import borrowerRoutes from "./routes/borrowerRoutes.js";
@@ -13,36 +12,22 @@ dotenv.config();
 const app = express();
 
 /* =========================
-   TRUST PROXY (PENTING UNTUK RENDER)
+   CORS FIX FINAL (PRODUCTION SAFE)
 ========================= */
-app.set("trust proxy", 1);
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://inventory-lapas-frontend.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false
+  })
+);
 
-/* =========================
-   SECURITY
-========================= */
-app.use(helmet());
-
-/* =========================
-   CORS (PRODUCTION READY)
-========================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://inventory-lapas-frontend.vercel.app"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error("CORS blocked"));
-  },
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// preflight wajib aman
+app.options("*", cors());
 
 /* =========================
    MIDDLEWARE
@@ -58,17 +43,10 @@ app.use("/api/borrowings", borrowingRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 /* =========================
-   ROOT TEST
+   HEALTH CHECK
 ========================= */
 app.get("/", (req, res) => {
   res.json({ message: "API Running OK" });
-});
-
-/* =========================
-   404 HANDLER
-========================= */
-app.use((req, res) => {
-  res.status(404).json({ message: "Not Found" });
 });
 
 /* =========================
@@ -76,6 +54,6 @@ app.use((req, res) => {
 ========================= */
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
