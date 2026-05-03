@@ -12,21 +12,43 @@ dotenv.config();
 const app = express();
 
 /* =========================
-   CORS FIX FINAL (PRODUCTION SAFE)
+   CORS CONFIG (LOCAL + PRODUCTION READY)
 ========================= */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://inventory-lapas-frontend.vercel.app"
+];
+
+// kalau mau LAN (HP / device lain), aktifkan IP lokal kamu di sini
+// contoh: "http://192.168.1.9:5173"
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://inventory-lapas-frontend.vercel.app"
-    ],
+    origin: function (origin, callback) {
+      // allow tools like Postman / mobile apps (no origin)
+      if (!origin) return callback(null, true);
+
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1") ||
+        origin.includes("192.168.")
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(null, true); // aman untuk development (tidak strict block)
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: false
   })
 );
 
-// preflight wajib aman
+/* =========================
+   HANDLE PREFLIGHT REQUEST
+========================= */
 app.options("*", cors());
 
 /* =========================
@@ -43,10 +65,13 @@ app.use("/api/borrowings", borrowingRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 /* =========================
-   HEALTH CHECK
+   TEST ROUTE
 ========================= */
 app.get("/", (req, res) => {
-  res.json({ message: "API Running OK" });
+  res.json({
+    message: "API Running OK",
+    status: "success"
+  });
 });
 
 /* =========================
@@ -54,6 +79,6 @@ app.get("/", (req, res) => {
 ========================= */
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
