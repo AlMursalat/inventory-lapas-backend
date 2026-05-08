@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import borrowerRoutes from "./routes/borrowerRoutes.js";
 import borrowingRoutes from "./routes/borrowingRoutes.js";
@@ -57,8 +58,9 @@ app.options("*", cors());
 app.use(express.json());
 
 /* =========================
-   ROUTES
+ROUTES
 ========================= */
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/borrowers", borrowerRoutes);
 app.use("/api/borrowings", borrowingRoutes);
